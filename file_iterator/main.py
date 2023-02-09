@@ -20,11 +20,11 @@ class FileSystemIterator:
             try:
                 cur_elem = next(self.elements_iterator)
                 while not (compile(self.pattern).match(cur_elem) is not None
-                           and (self.only_files and path.isfile(f"{self.sys_path}\\{cur_elem}")
-                                or self.only_dirs and path.isdir(f"{self.sys_path}\\{cur_elem}")
+                           and (self.only_files and path.isfile(f"{self.sys_path}/{cur_elem}")
+                                or self.only_dirs and path.isdir(f"{self.sys_path}/{cur_elem}")
                                 or not (self.only_files or self.only_dirs))):
                     cur_elem = next(self.elements_iterator)
-                return f"{self.sys_path}\\{cur_elem}"
+                return f"{self.sys_path}/{cur_elem}"
             except StopIteration:
                 pass
         self.sys_path, dirs, files = next(self.main_iterator)
@@ -36,7 +36,8 @@ class FileSystemIterator:
         return self
 
 
-root_path = input("Enter path to iterate from:")
+if __name__ == "__main__":
+    root_path = input("Enter path to iterate from:")
 
-for file in FileSystemIterator(root_path):
-    print(file)
+    for file in FileSystemIterator(root_path):
+        print(file)
