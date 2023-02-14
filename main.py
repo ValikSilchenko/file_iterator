@@ -35,25 +35,31 @@ class FileSystemIterator:
         if self.elements_iterator is not None:
             try:
                 cur_elem = next(self.elements_iterator)
-                while not (self.compiled_pattern.match(cur_elem) is not None
-                           and (self.only_files and path.isfile(f"{self.sys_path}\\{cur_elem}")
-                                or self.only_dirs and path.isdir(f"{self.sys_path}\\{cur_elem}")
-                                or not (self.only_files or self.only_dirs))):
+                while not self.can_return_element(cur_elem):
                     cur_elem = next(self.elements_iterator)
                 return f"{self.sys_path}\\{cur_elem}"
             except StopIteration:
                 pass
         self.sys_path, dirs, files = next(self.main_iterator)
-        self.elements_iterator = (elem for elem in dirs + files)  # creating generator from lists
+        self.elements_iterator = iter(dirs + files)  # creating iterator from lists
 
         return next(self)
 
     def __iter__(self):
         return self
 
+    def can_return_element(self, element):
+        result = True
+        if self.only_files:
+            result = path.isfile(f"{self.sys_path}\\{element}")
+        elif self.only_dirs:
+            result = path.isdir(f"{self.sys_path}\\{element}")
+
+        return result and self.compiled_pattern.match(element)
+
 
 # root_path = input("Enter path to iterate from:")
-root_path = "C:/pb/src"
+root_path = "C:/PerfLogs"
 
 for file in FileSystemIterator(root_path):
     print(file)
