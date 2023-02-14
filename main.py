@@ -17,7 +17,7 @@ class FileSystemIterator:
             raise Exception("Wrong path")
 
         self.main_iterator = walk(root)
-        self.elements = []
+        self.elements_iterator = iter([])
 
         try:
             self.compiled_pattern = re.compile(pattern)
@@ -32,22 +32,28 @@ class FileSystemIterator:
         self.sys_path = root
 
     def __next__(self):
-        self.update_elements()
-        cur_elem = self.elements.pop(0)
-        while not self.can_return_element(cur_elem):
-            if not self.elements:
-                self.update_elements()
-            cur_elem = self.elements.pop(0)
+        while True:
+            try:
+                cur_elem = next(self.elements_iterator)
+            except StopIteration:
+                self.elements_iterator = self.get_new_elements_iterator()
+                cur_elem = next(self.elements_iterator)
+
+            if self.can_return_element(cur_elem):
+                break
 
         return f"{self.sys_path}\\{cur_elem}"
 
     def __iter__(self):
         return self
 
-    def update_elements(self):
-        while not self.elements:
+    def get_new_elements_iterator(self):
+        elements = []
+        while not elements:
             self.sys_path, dirs, files = next(self.main_iterator)
-            self.elements = dirs + files
+            elements = dirs + files
+
+        return iter(elements)
 
     def can_return_element(self, element):
         result = True
@@ -59,8 +65,7 @@ class FileSystemIterator:
         return result and self.compiled_pattern.match(element)
 
 
-# root_path = input("Enter path to iterate from:")
-root_path = "C:\\Users"
+root_path = input("Enter path to iterate from:")
 
 for file in FileSystemIterator(root_path, only_dirs=True):
     print(file)
