@@ -17,6 +17,7 @@ class FileSystemIterator:
             raise Exception("Wrong path")
 
         self.main_iterator = walk(root)
+        self.elements = []
 
         try:
             self.compiled_pattern = re.compile(pattern)
@@ -28,25 +29,25 @@ class FileSystemIterator:
         if only_files and only_dirs:
             raise Exception("Cannot be only files and only dirs simultaneously")
 
-        self.elements_iterator = None
         self.sys_path = root
 
     def __next__(self):
-        if self.elements_iterator is not None:
-            try:
-                cur_elem = next(self.elements_iterator)
-                while not self.can_return_element(cur_elem):
-                    cur_elem = next(self.elements_iterator)
-                return f"{self.sys_path}\\{cur_elem}"
-            except StopIteration:
-                pass
-        self.sys_path, dirs, files = next(self.main_iterator)
-        self.elements_iterator = iter(dirs + files)  # creating iterator from lists
+        self.update_elements()
+        cur_elem = self.elements.pop(0)
+        while not self.can_return_element(cur_elem):
+            if not self.elements:
+                self.update_elements()
+            cur_elem = self.elements.pop(0)
 
-        return next(self)
+        return f"{self.sys_path}\\{cur_elem}"
 
     def __iter__(self):
         return self
+
+    def update_elements(self):
+        while not self.elements:
+            self.sys_path, dirs, files = next(self.main_iterator)
+            self.elements = dirs + files
 
     def can_return_element(self, element):
         result = True
@@ -59,7 +60,7 @@ class FileSystemIterator:
 
 
 # root_path = input("Enter path to iterate from:")
-root_path = "C:/PerfLogs"
+root_path = "C:\\Users"
 
-for file in FileSystemIterator(root_path):
+for file in FileSystemIterator(root_path, only_dirs=True):
     print(file)
